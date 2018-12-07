@@ -219,8 +219,6 @@ SettingsProcessor::fillAeInputParams(const CameraMetadata *settings,
         aeParams->window.y_start = aeRegion.top();
         aeParams->window.x_end = aeRegion.right();
         aeParams->window.y_end = aeRegion.bottom();
-        LOGI("@%s %d: window:(%d,%d,%d,%d)", __FUNCTION__, __LINE__,
-             aeParams->window.x_start, aeParams->window.y_start, aeParams->window.x_end, aeParams->window.y_end);
     }
 
     // ******** exposure_coordinate

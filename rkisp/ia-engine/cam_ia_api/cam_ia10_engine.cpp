@@ -495,7 +495,7 @@ RESULT CamIA10Engine::updateAeConfig(struct CamIA10_DyCfg* cfg) {
             if (set->frame_time_us_min != 0 && set->frame_time_us_max != 0) {
                 aecCfg.FpsSetEnable = true;
                 aecCfg.isFpsFix = false;
-                int ecmCnt = sizeof(pAecGlobal->EcmTimeDot.fCoeff) / sizeof (float);
+                int ecmCnt = sizeof(aecCfg.EcmTimeDot.fCoeff) / sizeof (float);
 
                 for (int i = 1; i < ecmCnt - 3; i++) {
                     aecCfg.EcmTimeDot.fCoeff[i] = (float)set->frame_time_us_min / 1000000;
@@ -555,7 +555,7 @@ RESULT CamIA10Engine::updateAwbConfig(struct CamIA10_DyCfg* cfg) {
         if (cfg->awb_cfg.mode != HAL_WB_AUTO) {
             char prfName[10];
             int i, no;
-            CamIlluProfile_t* pIlluProfile = NULL;
+            CamAwb_V10_IlluProfile_t* pIlluProfile = NULL;
             awbcfg.Mode = AWB_MODE_MANUAL;
             if (cfg->awb_cfg.mode == HAL_WB_INCANDESCENT) {
                 strcpy(prfName, "A");
@@ -573,11 +573,11 @@ RESULT CamIA10Engine::updateAwbConfig(struct CamIA10_DyCfg* cfg) {
                 LOGE("%s:not support this awb mode %d !", __func__, cfg->awb_cfg.mode);
 
             // get number of availabe illumination profiles from database
-            result = CamCalibDbGetNoOfIlluminations(hCamCalibDb, &no);
+            result = CamCalibDbGetNoOfAwb_V10_Illuminations(hCamCalibDb, &no);
             // run over all illumination profiles
             for (i = 0; i < no; i++) {
                 // get an illumination profile from database
-                result = CamCalibDbGetIlluminationByIdx(hCamCalibDb, i, &pIlluProfile);
+                result = CamCalibDbGetAwb_V10_IlluminationByIdx(hCamCalibDb, i, &pIlluProfile);
                 if (strstr(pIlluProfile->name, prfName)) {
                     awbcfg.idx = i;
                     break;
@@ -650,7 +650,7 @@ RESULT CamIA10Engine::updateAwbConfig(struct CamIA10_DyCfg* cfg) {
             if (cfg->awb_cfg.mode != HAL_WB_AUTO) {
                 char prfName[10];
                 int i, no;
-                CamIlluProfile_t* pIlluProfile = NULL;
+                CamAwb_V10_IlluProfile_t* pIlluProfile = NULL;
                 awbcfg.Mode = AWB_MODE_MANUAL;
                 //get index
                 //A:3400k
@@ -678,11 +678,11 @@ RESULT CamIA10Engine::updateAwbConfig(struct CamIA10_DyCfg* cfg) {
                     LOGE("%s:not support this awb mode %d !", __func__, cfg->awb_cfg.mode);
 
                 // get number of availabe illumination profiles from database
-                result = CamCalibDbGetNoOfIlluminations(hCamCalibDb, &no);
+                result = CamCalibDbGetNoOfAwb_V10_Illuminations(hCamCalibDb, &no);
                 // run over all illumination profiles
                 for (i = 0; i < no; i++) {
                     // get an illumination profile from database
-                    result = CamCalibDbGetIlluminationByIdx(hCamCalibDb, i, &pIlluProfile);
+                    result = CamCalibDbGetAwb_V10_IlluminationByIdx(hCamCalibDb, i, &pIlluProfile);
                     if (strstr(pIlluProfile->name, prfName)) {
                         awbcfg.idx = i;
                         break;
@@ -1153,11 +1153,10 @@ RESULT CamIA10Engine::initAWB() {
     awbcfg.MeasConfig        = MeasConfig;
     awbcfg.Flags             = AWB_WORKING_FLAG_USE_DAMPING | AWB_WORKING_FLAG_USE_CC_OFFSET;
     awbcfg.hCamCalibDb = hCamCalibDb;
-#ifdef RKISP_v12
-    awbcfg.validHistBinsNum = 32;
-#else
-    awbcfg.validHistBinsNum = 16;
-#endif
+    if (mIspVer > 0)
+        awbcfg.validHistBinsNum = 32;
+    else
+        awbcfg.validHistBinsNum = 16;
     return RET_SUCCESS;
 }
 
@@ -1469,14 +1468,11 @@ RESULT CamIA10Engine::initAEC() {
     aecCfg.AOE_Y_Min_th   = pAecGlobal->AOE_Y_Min_th;
     aecCfg.AOE_Step_Dec   = pAecGlobal->AOE_Step_Dec;
     aecCfg.AOE_Step_Inc   = pAecGlobal->AOE_Step_Inc;
-    aecCfg.DON_Enable                = pAecGlobal->DON_Enable;
-    aecCfg.DON_Day2Night_Gain_th     = pAecGlobal->DON_Day2Night_Gain_th;
-    aecCfg.DON_Day2Night_Inttime_th  = pAecGlobal->DON_Day2Night_Inttime_th;
-    aecCfg.DON_Day2Night_Luma_th     = pAecGlobal->DON_Day2Night_Luma_th;
-    aecCfg.DON_Night2Day_Gain_th     = pAecGlobal->DON_Night2Day_Gain_th;
-    aecCfg.DON_Night2Day_Inttime_th  = pAecGlobal->DON_Night2Day_Inttime_th;
-    aecCfg.DON_Night2Day_Luma_th     = pAecGlobal->DON_Night2Day_Luma_th;
-    aecCfg.DON_Bouncing_th           = pAecGlobal->DON_Bouncing_th;
+    aecCfg.DON_Night_Trigger        = pAecGlobal->DON_Night_Trigger;
+    aecCfg.DON_Night_Mode           = pAecGlobal->DON_Night_Mode;
+    aecCfg.DON_Day2Night_Fac_th     = pAecGlobal->DON_Day2Night_Fac_th;
+    aecCfg.DON_Night2Day_Fac_th     = pAecGlobal->DON_Night2Day_Fac_th;
+    aecCfg.DON_Bouncing_th          = pAecGlobal->DON_Bouncing_th;
     aecCfg.meas_mode    = (AecMeasuringMode_t)(pAecGlobal->CamerIcIspExpMeasuringMode);
     aecCfg.FpsSetEnable = pAecGlobal->FpsSetEnable;
     aecCfg.isFpsFix = pAecGlobal->isFpsFix;
@@ -1486,15 +1482,15 @@ RESULT CamIA10Engine::initAEC() {
     aecCfg.IntervalAdjStgy.dluma_high_th = pAecGlobal->InterAdjustStrategy.dluma_high_th;
     aecCfg.IntervalAdjStgy.dluma_low_th = pAecGlobal->InterAdjustStrategy.dluma_low_th;
     aecCfg.IntervalAdjStgy.trigger_frame = pAecGlobal->InterAdjustStrategy.trigger_frame;
-#ifdef RKISP_v12
-    aecCfg.Valid_GridWeights_Num = 81;
-    aecCfg.Valid_GridWeights_W = 9;
-    aecCfg.Valid_HistBins_Num = 32;
-#else
-    aecCfg.Valid_GridWeights_Num = 25;
-    aecCfg.Valid_GridWeights_W = 5;
-    aecCfg.Valid_HistBins_Num = 16;
-#endif
+    if (mIspVer > 0) {
+        aecCfg.Valid_GridWeights_Num = 81;
+        aecCfg.Valid_GridWeights_W = 9;
+        aecCfg.Valid_HistBins_Num = 32;
+    } else {
+        aecCfg.Valid_GridWeights_Num = 25;
+        aecCfg.Valid_GridWeights_W = 5;
+        aecCfg.Valid_HistBins_Num = 16;
+    }
     //zlj add for 1608 HDR stats
     if (mSensorEntityName && strstr(mSensorEntityName, "1608")) {
         LOGD("sensor is attached to rk1608, use HDR ae !");
@@ -1523,18 +1519,51 @@ RESULT CamIA10Engine::initAEC() {
                  pweight[i], pweight[i+1],pweight[i+2],pweight[i+3],pweight[i+4]);
     }
 
-    memcpy(aecCfg.EcmTimeDot.fCoeff, pAecGlobal->EcmTimeDot.fCoeff, sizeof(pAecGlobal->EcmTimeDot.fCoeff));
-    memcpy(aecCfg.EcmGainDot.fCoeff, pAecGlobal->EcmGainDot.fCoeff, sizeof(pAecGlobal->EcmGainDot.fCoeff));
-    memcpy(aecCfg.EcmLTimeDot.fCoeff, pAecGlobal->EcmLTimeDot.fCoeff, sizeof(pAecGlobal->EcmLTimeDot.fCoeff));//zlj
-    memcpy(aecCfg.EcmLGainDot.fCoeff, pAecGlobal->EcmLGainDot.fCoeff, sizeof(pAecGlobal->EcmLGainDot.fCoeff));//zlj
-    memcpy(aecCfg.EcmSTimeDot.fCoeff, pAecGlobal->EcmSTimeDot.fCoeff, sizeof(pAecGlobal->EcmSTimeDot.fCoeff));//zlj
-    memcpy(aecCfg.EcmSGainDot.fCoeff, pAecGlobal->EcmSGainDot.fCoeff, sizeof(pAecGlobal->EcmSGainDot.fCoeff));//zlj
     memcpy(aecCfg.FpsFixTimeDot.fCoeff, pAecGlobal->FpsFixTimeDot.fCoeff, sizeof(pAecGlobal->FpsFixTimeDot.fCoeff));
     memcpy (&aecCfg.HdrCtrl,&pAecGlobal->HdrCtrl,sizeof(pAecGlobal->HdrCtrl));//zlj
 
     aecCfg.StepSize = 0;
     aecCfg.HistMode = (CamerIcIspHistMode_t)(pAecGlobal->CamerIcIspHistMode);
 
+	//oyyf 
+	if( mLightMode <= LIGHT_MODE_MIN || mLightMode >= LIGHT_MODE_MAX){
+  		mLightMode= LIGHT_MODE_DAY;
+  	}
+	
+	int no_ExpSeparate = 0;
+    ret = CamCalibDbGetNoOfExpSeparate(hCamCalibDb, pAecGlobal, &no_ExpSeparate);
+    if (ret != RET_SUCCESS) {
+      ALOGD("%s: Getting number of DySetpoint profile from calib database failed (%d)\n",
+            __FUNCTION__, ret);
+      return (ret);
+    }
+    
+    if(no_ExpSeparate){
+    	for(int i=0; i<no_ExpSeparate && i<LIGHT_MODE_MAX ; i++){
+    		CamCalibAecExpSeparate_t* pExpSeparateProfile = NULL;
+    		ret = CamCalibDbGetExpSeparateByIdx(hCamCalibDb, pAecGlobal, i, &pExpSeparateProfile);
+    		if (ret != RET_SUCCESS) {
+    	      ALOGD("%s: Getting idx(%d) ExpSeparate profile from calib database failed (%d)\n",
+    	            __FUNCTION__, i, ret);
+    	      return (ret);
+    	    }
+    	    DCT_ASSERT(NULL != pExpSeparateProfile);
+    		aecCfg.pExpSeparate[i] = pExpSeparateProfile;
+    	}
+
+		if(mLightMode > no_ExpSeparate - 1)
+			mLightMode = LIGHT_MODE_DAY;
+		
+		memcpy(aecCfg.EcmTimeDot.fCoeff, aecCfg.pExpSeparate[mLightMode]->ecmTimeDot.fCoeff, sizeof(aecCfg.EcmTimeDot.fCoeff));
+    	memcpy(aecCfg.EcmGainDot.fCoeff, aecCfg.pExpSeparate[mLightMode]->ecmGainDot.fCoeff, sizeof(aecCfg.EcmGainDot.fCoeff));
+    	memcpy(aecCfg.EcmLTimeDot.fCoeff, aecCfg.pExpSeparate[mLightMode]->ecmLTimeDot.fCoeff, sizeof(aecCfg.EcmLTimeDot.fCoeff));//zlj
+    	memcpy(aecCfg.EcmLGainDot.fCoeff, aecCfg.pExpSeparate[mLightMode]->ecmLGainDot.fCoeff, sizeof(aecCfg.EcmLGainDot.fCoeff));//zlj
+    	memcpy(aecCfg.EcmSTimeDot.fCoeff, aecCfg.pExpSeparate[mLightMode]->ecmSTimeDot.fCoeff, sizeof(aecCfg.EcmSTimeDot.fCoeff));//zlj
+    	memcpy(aecCfg.EcmSGainDot.fCoeff, aecCfg.pExpSeparate[mLightMode]->ecmSGainDot.fCoeff, sizeof(aecCfg.EcmSGainDot.fCoeff));//zlj
+    }
+  
+    aecCfg.LightMode = mLightMode;	
+  
     if (aecDesc != NULL) {
         XCamAeParam aeParam;
         aeParam.mode  = XCAM_AE_MODE_AUTO;
@@ -1692,7 +1721,7 @@ RESULT CamIA10Engine::runAEC(HAL_AecCfg* config) {
                     if (set->frame_time_us_min != -1 && set->frame_time_us_max != -1) {
                         aecCfg.FpsSetEnable = true;
                         aecCfg.isFpsFix = true;
-                        int ecmCnt = sizeof(pAecGlobal->EcmTimeDot.fCoeff) / sizeof (float);
+                        int ecmCnt = sizeof(aecCfg.EcmTimeDot.fCoeff) / sizeof (float);
 
                         for (int i = 1; i < ecmCnt - 3; i++) {
                             aecCfg.EcmTimeDot.fCoeff[i] = (float)set->frame_time_us_min / 1000000;
@@ -2007,7 +2036,7 @@ RESULT CamIA10Engine::runAWB(HAL_AwbCfg* awbHalCfg) {
             if (awbHalCfg->mode != HAL_WB_AUTO) {
                 char prfName[10];
                 int i, no;
-                CamIlluProfile_t* pIlluProfile = NULL;
+                CamAwb_V10_IlluProfile_t* pIlluProfile = NULL;
                 awbcfg.Mode = AWB_MODE_MANUAL;
                 if (awbHalCfg->mode == HAL_WB_INCANDESCENT) {
                     strcpy(prfName, "A");
@@ -2025,11 +2054,11 @@ RESULT CamIA10Engine::runAWB(HAL_AwbCfg* awbHalCfg) {
                     LOGE("%s:not support this awb mode %d !", __func__, awbHalCfg->mode);
 
                 // get number of availabe illumination profiles from database
-                result = CamCalibDbGetNoOfIlluminations(hCamCalibDb, &no);
+                result = CamCalibDbGetNoOfAwb_V10_Illuminations(hCamCalibDb, &no);
                 // run over all illumination profiles
                 for (i = 0; i < no; i++) {
                     // get an illumination profile from database
-                    result = CamCalibDbGetIlluminationByIdx(hCamCalibDb, i, &pIlluProfile);
+                    result = CamCalibDbGetAwb_V10_IlluminationByIdx(hCamCalibDb, i, &pIlluProfile);
                     if (strstr(pIlluProfile->name, prfName)) {
                         awbcfg.idx = i;
                         break;
@@ -2100,7 +2129,7 @@ RESULT CamIA10Engine::runAWB(HAL_AwbCfg* awbHalCfg) {
                 if (awbHalCfg->mode != HAL_WB_AUTO) {
                     char prfName[10];
                     int i, no;
-                    CamIlluProfile_t* pIlluProfile = NULL;
+                    CamAwb_V10_IlluProfile_t* pIlluProfile = NULL;
                     awbcfg.Mode = AWB_MODE_MANUAL;
                     //get index
                     //A:3400k
@@ -2128,11 +2157,11 @@ RESULT CamIA10Engine::runAWB(HAL_AwbCfg* awbHalCfg) {
                         LOGE("%s:not support this awb mode %d !", __func__, awbHalCfg->mode);
 
                     // get number of availabe illumination profiles from database
-                    result = CamCalibDbGetNoOfIlluminations(hCamCalibDb, &no);
+                    result = CamCalibDbGetNoOfAwb_V10_Illuminations(hCamCalibDb, &no);
                     // run over all illumination profiles
                     for (i = 0; i < no; i++) {
                         // get an illumination profile from database
-                        result = CamCalibDbGetIlluminationByIdx(hCamCalibDb, i, &pIlluProfile);
+                        result = CamCalibDbGetAwb_V10_IlluminationByIdx(hCamCalibDb, i, &pIlluProfile);
                         if (strstr(pIlluProfile->name, prfName)) {
                             awbcfg.idx = i;
                             break;
