@@ -83,6 +83,7 @@ LOCAL_MODULE:= librkisp
 
 include $(BUILD_SHARED_LIBRARY)
 
+ifeq ($(IS_ANDROID_OS),true)
 include $(CLEAR_VARS)
 LOCAL_MODULE_RELATIVE_PATH := rkisp/ae
 LOCAL_MODULE := librkisp_aec
@@ -140,4 +141,4 @@ else
 LOCAL_SRC_FILES := lib/$(TARGET_ARCH)/$(LOCAL_MODULE)$(LOCAL_MODULE_SUFFIX)
 endif
 include $(BUILD_PREBUILT)
-
+endif
