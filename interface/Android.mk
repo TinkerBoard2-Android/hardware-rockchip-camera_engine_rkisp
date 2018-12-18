@@ -87,6 +87,7 @@ ifeq ($(IS_ANDROID_OS),true)
 include $(CLEAR_VARS)
 LOCAL_MODULE_RELATIVE_PATH := rkisp/ae
 LOCAL_MODULE := librkisp_ae
+AEC_LIB_NAME := librkisp_aec.so
 ifeq (1,$(strip $(shell expr $(PLATFORM_VERSION) \>= 8.0)))
      LOCAL_PROPRIETARY_MODULE := true
 endif
@@ -96,8 +97,8 @@ LOCAL_MODULE_STEM := $(LOCAL_MODULE)
 LOCAL_MODULE_SUFFIX := .so
 ifneq ($(strip $(TARGET_2ND_ARCH)), )
 LOCAL_MULTILIB := both
-LOCAL_SRC_FILES_$(TARGET_2ND_ARCH) := ../plugins/3a/rkiq/aec/lib32/$(LOCAL_MODULE)$(LOCAL_MODULE_SUFFIX)
-LOCAL_SRC_FILES_$(TARGET_ARCH) := ../plugins/3a/rkiq/aec/lib64/$(LOCAL_MODULE)$(LOCAL_MODULE_SUFFIX)
+LOCAL_SRC_FILES_$(TARGET_2ND_ARCH) := ../plugins/3a/rkiq/aec/lib32/$(AEC_LIB_NAME)
+LOCAL_SRC_FILES_$(TARGET_ARCH) := ../plugins/3a/rkiq/aec/lib64/$(AEC_LIB_NAME)
 else
 LOCAL_SRC_FILES := lib/$(TARGET_ARCH)/$(LOCAL_MODULE)$(LOCAL_MODULE_SUFFIX)
 endif
