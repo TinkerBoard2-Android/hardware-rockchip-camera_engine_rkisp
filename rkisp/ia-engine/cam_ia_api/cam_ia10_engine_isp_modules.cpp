@@ -80,7 +80,6 @@ RESULT cam_ia10_isp_dpcc_config
     dpcc_result->enabled = BOOL_FALSE;
   } else if (enable_mode == HAL_ISP_ACTIVE_SETTING) {
     ISP_CHECK_NULL(dpcc_cfg);
-    dpcc_result->enabled = BOOL_TRUE;
     dpcc_result->isp_dpcc_mode          = dpcc_cfg->isp_dpcc_mode;
     dpcc_result->isp_dpcc_output_mode     = dpcc_cfg->isp_dpcc_output_mode;
     dpcc_result->isp_dpcc_set_use         = dpcc_cfg->isp_dpcc_set_use;
@@ -109,11 +108,11 @@ RESULT cam_ia10_isp_dpcc_config
 
     dpcc_result->isp_dpcc_ro_limits       = dpcc_cfg->isp_dpcc_ro_limits;
     dpcc_result->isp_dpcc_rnd_offs        = dpcc_cfg->isp_dpcc_rnd_offs;
+	dpcc_result->enabled = (dpcc_result->isp_dpcc_mode & 0x01) ? BOOL_TRUE : BOOL_FALSE;
   } else if (enable_mode == HAL_ISP_ACTIVE_DEFAULT) {
     CamResolutionName_t res_name = {0};
     CamDpccProfile_t*        pDpccProfile = NULL;
     //get configs from xml
-    dpcc_result->enabled = BOOL_TRUE;
     result = CamCalibDbGetResolutionNameByWidthHeight(hCamCalibDb, width, height,  &res_name);
     if (RET_SUCCESS != result) {
       ALOGE("%s: resolution (%dx%d) not found in database\n", __FUNCTION__, width, height);
@@ -155,6 +154,7 @@ RESULT cam_ia10_isp_dpcc_config
 
     dpcc_result->isp_dpcc_ro_limits       = pDpccProfile->isp_dpcc_ro_limits;
     dpcc_result->isp_dpcc_rnd_offs        = pDpccProfile->isp_dpcc_rnd_offs;
+	dpcc_result->enabled = (dpcc_result->isp_dpcc_mode & 0x01) ? BOOL_TRUE : BOOL_FALSE;
   } else {
     ALOGE("%s:error enable mode %d!", __func__, enable_mode);
     result = RET_FAILURE;
