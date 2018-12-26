@@ -86,7 +86,7 @@ include $(BUILD_SHARED_LIBRARY)
 ifeq ($(IS_ANDROID_OS),true)
 include $(CLEAR_VARS)
 LOCAL_MODULE_RELATIVE_PATH := rkisp/ae
-LOCAL_MODULE := librkisp_ae
+LOCAL_MODULE := librkisp_aec
 AEC_LIB_NAME := librkisp_aec.so
 ifeq (1,$(strip $(shell expr $(PLATFORM_VERSION) \>= 8.0)))
      LOCAL_PROPRIETARY_MODULE := true
