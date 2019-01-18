@@ -52,10 +52,20 @@
  *  - remove unnecessary lib dependancy
  *  - do not expose the head file aec_ctrl.h
  * v0.0.3
- *  - sync rkisp aec demo with calibdb v0.2.0 
+ *  - sync rkisp aec demo with calibdb v0.2.0
+ * v0.0.4
+ *  - support manual ae mode
+ * v0.0.5
+ *  - add DarkROI detection in Hdr AE
+ *  - fix some bugs of ratio calculation
+ *  - add ExpDot & Setpoint for Hdr AE
+ * v0.0.6
+ *  - run ae every frame
+ *  - split each exposure result to 3 steps, make ae
+ *    converge more smooth
  */
 
-#define CONFIG_AE_LIB_VERSION "v0.0.3"
+#define CONFIG_AE_LIB_VERSION "v0.0.6"
 
 #ifdef __cplusplus
 extern "C"
@@ -143,6 +153,13 @@ typedef struct AecInterAdjust_s{
 	uint32_t  trigger_frame;
 }AecInterAdjust_t;
 
+typedef enum AecMode_e {
+  AEC_MODE_INVALID                    = 0,
+  AEC_MODE_MANUAL                     = 1,
+  AEC_MODE_AUTO                       = 2,
+  AEC_MODE_MAX
+} AecMode_t;
+
 /*****************************************************************************/
 /**
  *          AecConfig_t
@@ -155,7 +172,9 @@ typedef struct AecConfig_s {
   Cam9x9UCharMatrix_t         GridWeights;
   CamerIcIspHistMode_t  HistMode;
   AecMeasuringMode_t    meas_mode;
-
+  AecMode_t             AecMode;
+  float                 ManExpoSecs;
+  float                 ManGains;
   float                       SetPoint;                   /**< set point to hit by the ae control system */
   float                       ClmTolerance;
   float                       DampOverStill;              /**< damping coefficient for still image mode */
@@ -259,9 +278,18 @@ typedef struct Hdr_sensor_metadata_s {
 	unsigned int gain_s;
 }Hdr_sensor_metadata_t;
 
+typedef struct Sensor_metadata_s {
+    float coarse_integration_time;
+    float analog_gain_code_global;
+    float LinePeriodsPerField;
+    int regIntegrationTime;
+    int regGain;
+} Sensor_metadata_t;
+
 typedef struct AecStat_s {
   unsigned char  exp_mean[AEC_AE_MEAN_MAX];
   unsigned int   hist_bins[AEC_HIST_BIN_N_MAX];
+  Sensor_metadata_t sensor_metadata;
   /*zlj add*/
   bool   is_hdr_stats;
   struct Hdrae_stat_s oneframe[3];
@@ -288,6 +316,7 @@ typedef struct AecResult_s {
   float analog_gain_code_global;
   int regIntegrationTime;
   int regGain;
+  Sensor_metadata_t exp_smooth_results[3];
   float PixelClockFreqMHZ;
   float PixelPeriodsPerLine;
   float LinePeriodsPerField;
@@ -305,6 +334,7 @@ typedef struct AecResult_s {
   bool auto_adjust_fps;
   double aperture_fn;
   bool converged;
+  AecMode_t AecMode;
 
   /*zlj add for hdr result*/
   bool IsHdrExp;
@@ -326,24 +356,6 @@ typedef enum AecState_e {
   AEC_STATE_LOCKED        = 4,
   AEC_STATE_MAX
 } AecState_t;
-
-
-/*****************************************************************************/
-/**
- * @brief   This typedef represents the histogram which is measured by the
- *          CamerIC ISP histogram module.
- *
- *****************************************************************************/
-typedef uint32_t CamerIcHistBins_t[AEC_HIST_BIN_N_MAX];
-typedef uint32_t CamerIcHdrHistBins_t[AEC_HDR_HIST_BIN_N_MAX];
-
-/*****************************************************************************/
-/**
- * @brief   Array type for ISP EXP measurment values.
- *
- *****************************************************************************/
-typedef uint8_t CamerIcMeanLuma_t[AEC_AE_MEAN_MAX];
-typedef uint16_t CamerIcHdrMeanLuma_t[AEC_HDR_AE_MEAN_MAX];
 
 /*****************************************************************************/
 /**
