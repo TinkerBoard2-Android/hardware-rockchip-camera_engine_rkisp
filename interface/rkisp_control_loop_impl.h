@@ -17,6 +17,12 @@
 #ifndef _RKISP_CONTROL_LOOP_IMPL_H_
 #define _RKISP_CONTROL_LOOP_IMPL_H_
 
+#ifdef ANDROID_VERSION_ABOVE_8_X
+#include <CameraMetadata.h>
+using ::android::hardware::camera::common::V1_0::helper::CameraMetadata;
+#else
+#include <camera/CameraMetadata.h>
+#endif
 #include "rkisp_control_loop.h"
 
 #endif // _RKISP_CONTROL_LOOP_H_
