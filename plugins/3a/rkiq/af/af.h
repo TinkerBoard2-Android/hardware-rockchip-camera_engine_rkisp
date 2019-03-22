@@ -79,9 +79,11 @@
 * 1)fix the warning when it complie .
 * 2)fix the bug of memory leaks.
 * 3)fix the problem of NULL pointer.
+*v0.2.7
+* 1)fix the search pointer error.
 */
 
-#define CONFIG_AF_LIB_VERSION "v0.2.6"
+#define CONFIG_AF_LIB_VERSION "v0.2.7"
 
 #ifdef __cplusplus
 extern "C"
