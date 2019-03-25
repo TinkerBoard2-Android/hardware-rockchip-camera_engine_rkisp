@@ -81,9 +81,17 @@
 * 3)fix the problem of NULL pointer.
 *v0.2.7
 * 1)fix the search pointer error.
+*v0.2.8
+* 1)fix afstop stuck
+*   af interfaces such as afstop/afstart are implemented as asynchronized
+*   and based on message queue, and should be run in diffrent thread with
+*   AfProcessFrame. but now interface afstop/afstart and AfProcessFrame are
+*   running in same thread, this will cause wrong af state transition.
+*   temporarily add a flag to stop af immediatly to workaround this bug.
+*
 */
 
-#define CONFIG_AF_LIB_VERSION "v0.2.7"
+#define CONFIG_AF_LIB_VERSION "v0.2.8"
 
 #ifdef __cplusplus
 extern "C"
@@ -520,7 +528,8 @@ RESULT AfOneShot
  *****************************************************************************/
 RESULT AfStop
 (
-    AfHandle_t handle
+    AfHandle_t handle,
+    bool force_stop
 );
 
 
