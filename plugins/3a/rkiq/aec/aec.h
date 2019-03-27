@@ -63,9 +63,11 @@
  *  - run ae every frame
  *  - split each exposure result to 3 steps, make ae
  *    converge more smooth
+ * v0.0.7
+ *  - fix always report non-converged AE state in dark enviroment
  */
 
-#define CONFIG_AE_LIB_VERSION "v0.0.6"
+#define CONFIG_AE_LIB_VERSION "v0.0.7"
 
 #ifdef __cplusplus
 extern "C"
