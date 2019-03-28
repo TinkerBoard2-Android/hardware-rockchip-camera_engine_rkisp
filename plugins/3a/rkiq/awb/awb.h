@@ -58,9 +58,11 @@
  * v0.0.8
  *  - use the current effecting isp params along with the stats
  *  - to calculate next awb params
+ * v0.0.9
+* 1) enable ALOGV/ALOGW for Android
  */
 
-#define CONFIG_AWB_LIB_VERSION "v0.0.8"
+#define CONFIG_AWB_LIB_VERSION "v0.0.9"
 
 #ifdef __cplusplus
 extern "C"

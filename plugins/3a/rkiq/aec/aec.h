@@ -65,9 +65,13 @@
  *    converge more smooth
  * v0.0.7
  *  - fix always report non-converged AE state in dark enviroment
+ * v0.0.8
+ *  - fix the min intergration time of 4[H] exposure lines
+ * v0.0.9
+ *  - enable ALOGV/ALOGW for Android 
  */
 
-#define CONFIG_AE_LIB_VERSION "v0.0.7"
+#define CONFIG_AE_LIB_VERSION "v0.0.9"
 
 #ifdef __cplusplus
 extern "C"

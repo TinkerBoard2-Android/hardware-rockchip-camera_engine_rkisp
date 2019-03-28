@@ -88,10 +88,13 @@
 *   AfProcessFrame. but now interface afstop/afstart and AfProcessFrame are
 *   running in same thread, this will cause wrong af state transition.
 *   temporarily add a flag to stop af immediatly to workaround this bug.
-*
+*v0.2.9
+* 1) enable ALOGV/ALOGW for Android
+*v0.2.10
+* 1)remove afmCmdQue,so the system will must to be a sync thread.
 */
 
-#define CONFIG_AF_LIB_VERSION "v0.2.8"
+#define CONFIG_AF_LIB_VERSION "v0.2.10"
 
 #ifdef __cplusplus
 extern "C"
@@ -509,7 +512,8 @@ RESULT AfStart
 RESULT AfOneShot
 (
     AfHandle_t                handle,
-    const AfSearchStrategy_t  fss
+    const AfSearchStrategy_t  fss,
+    AfMeas_t*                 pMeasResults
 );
 
 
@@ -528,8 +532,7 @@ RESULT AfOneShot
  *****************************************************************************/
 RESULT AfStop
 (
-    AfHandle_t handle,
-    bool force_stop
+    AfHandle_t handle
 );
 
 
