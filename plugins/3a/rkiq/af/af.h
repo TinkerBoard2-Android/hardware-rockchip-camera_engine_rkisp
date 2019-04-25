@@ -92,9 +92,13 @@
 * 1) enable ALOGV/ALOGW for Android
 *v0.2.10
 * 1)remove afmCmdQue,so the system will must to be a sync thread.
+*v0.2.11
+* 1)remove the condition that trigger auto focus by window change.
+*v0.2.12
+* 1)fix the bug about touch focus
 */
 
-#define CONFIG_AF_LIB_VERSION "v0.2.10"
+#define CONFIG_AF_LIB_VERSION "v0.2.12"
 
 #ifdef __cplusplus
 extern "C"

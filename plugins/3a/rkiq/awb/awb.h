@@ -60,9 +60,13 @@
  *  - to calculate next awb params
  * v0.0.9
 * 1) enable ALOGV/ALOGW for Android
+ * v0.0.a
+ * 1) mdoify awb converged threshold
+  *2) only awb is converged and wp number bigger than threshold ,then 
+        enter AwbSetValues function to update awb value to IC register.
  */
 
-#define CONFIG_AWB_LIB_VERSION "v0.0.9"
+#define CONFIG_AWB_LIB_VERSION "v0.0.a"
 
 #ifdef __cplusplus
 extern "C"
