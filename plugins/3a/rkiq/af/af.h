@@ -95,10 +95,13 @@
 *v0.2.11
 * 1)remove the condition that trigger auto focus by window change.
 *v0.2.12
-* 1)fix the bug about touch focus
+* 1)fix the bug about touch focus.
+*v0.2.13
+* 1)fix the bug that AfmPosTbl init is wrog,so quick found will set a wrong position.
+* 2)fix the bug tha continue focus will trigger frequently.
 */
 
-#define CONFIG_AF_LIB_VERSION "v0.2.12"
+#define CONFIG_AF_LIB_VERSION "v0.2.13"
 
 #ifdef __cplusplus
 extern "C"
