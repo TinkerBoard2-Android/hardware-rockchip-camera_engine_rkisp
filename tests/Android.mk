@@ -41,7 +41,7 @@ LOCAL_C_INCLUDES += \
 LOCAL_C_INCLUDES += \
 	external/libdrm/include/drm \
 	external/libdrm
-ifeq (1,$(strip $(shell expr $(PLATFORM_VERSION) \>= 8.0)))
+ifeq (1,$(strip $(shell expr $(PLATFORM_SDK_VERSION) \>= 26)))
 LOCAL_PROPRIETARY_MODULE := true
 LOCAL_C_INCLUDES += \
 system/core/libutils/include \
@@ -105,7 +105,7 @@ LOCAL_SHARED_LIBRARIES += \
 LOCAL_C_INCLUDES += \
     system/media/camera/include \
     frameworks/av/include
-ifeq (1,$(strip $(shell expr $(PLATFORM_VERSION) \>= 8.0)))
+ifeq (1,$(strip $(shell expr $(PLATFORM_SDK_VERSION) \>= 26)))
 LOCAL_PROPRIETARY_MODULE := true
 LOCAL_C_INCLUDES += \
 system/core/libutils/include \

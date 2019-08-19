@@ -60,7 +60,7 @@ LOCAL_C_INCLUDES += \
     system/media/private/camera/include \
     frameworks/av/include
 LOCAL_CFLAGS += -DANDROID_PLATEFORM
-ifeq (1,$(strip $(shell expr $(PLATFORM_VERSION) \>= 8.0)))
+ifeq (1,$(strip $(shell expr $(PLATFORM_SDK_VERSION) \>= 26)))
 LOCAL_PROPRIETARY_MODULE := true
 LOCAL_C_INCLUDES += \
 system/core/libutils/include \
@@ -91,7 +91,7 @@ include $(CLEAR_VARS)
 LOCAL_MODULE_RELATIVE_PATH := rkisp/ae
 LOCAL_MODULE := librkisp_aec
 AEC_LIB_NAME := librkisp_aec.so
-ifeq (1,$(strip $(shell expr $(PLATFORM_VERSION) \>= 8.0)))
+ifeq (1,$(strip $(shell expr $(PLATFORM_SDK_VERSION) \>= 26)))
      LOCAL_PROPRIETARY_MODULE := true
 endif
 LOCAL_MODULE_TAGS := optional
@@ -111,7 +111,7 @@ include $(BUILD_PREBUILT)
 include $(CLEAR_VARS)
 LOCAL_MODULE_RELATIVE_PATH := rkisp/awb
 LOCAL_MODULE := librkisp_awb
-ifeq (1,$(strip $(shell expr $(PLATFORM_VERSION) \>= 8.0)))
+ifeq (1,$(strip $(shell expr $(PLATFORM_SDK_VERSION) \>= 26)))
     LOCAL_PROPRIETARY_MODULE := true
 endif
 LOCAL_MODULE_TAGS := optional
@@ -130,7 +130,7 @@ include $(BUILD_PREBUILT)
 include $(CLEAR_VARS)
 LOCAL_MODULE_RELATIVE_PATH := rkisp/af
 LOCAL_MODULE := librkisp_af
-ifeq (1,$(strip $(shell expr $(PLATFORM_VERSION) \>= 8.0)))
+ifeq (1,$(strip $(shell expr $(PLATFORM_SDK_VERSION) \>= 26)))
     LOCAL_PROPRIETARY_MODULE := true
 endif
 LOCAL_MODULE_TAGS := optional
