@@ -25,6 +25,19 @@
 #include "isp_poll_thread.h"
 #include "rkcamera_vendor_tags.h"
 #include <base/xcam_log.h>
+#ifdef ANDROID_VERSION_ABOVE_8_X
+#include <cutils/properties.h>
+#define PROPERTY_VALUE_MAX 32
+#define CAM_RKISP_PROPERTY_KEY  "vendor.cam.librkisp.ver"
+#define CAM_AF_PROPERTY_KEY  "vendor.cam.librkisp.af.ver"
+#define CAM_AEC_PROPERTY_KEY  "vendor.cam.librkisp.aec.ver"
+#define CAM_AWB_PROPERTY_KEY  "vendor.cam.librkisp.awb.ver"
+
+static char rkIspVersion[PROPERTY_VALUE_MAX] = CONFIG_CAM_ENGINE_LIB_VERSION;
+static char rkIspAfVersion[PROPERTY_VALUE_MAX] = CONFIG_AF_LIB_VERSION;
+static char rkIspAwbVersion[PROPERTY_VALUE_MAX] = CONFIG_AWB_LIB_VERSION;
+static char rkIspAecVersion[PROPERTY_VALUE_MAX] = CONFIG_AE_LIB_VERSION;
+#endif
 
 using namespace XCam;
 
@@ -250,7 +263,19 @@ static void xcam_init_cam_engine_lib(void)
 {
     xcam_get_log_level();
     LOGI("\n*******************************************\n"
-         "        CAM ENGINE LIB VERSION IS %s"
+         "        CAM ENGINE LIB VERSION IS  %s\n"
+         "        CAM ENGINE AF VERSION IS   %s\n"
+         "        CAM ENGINE AWB VERSION IS  %s\n"
+         "        CAM ENGINE AEC VERSION IS  %s\n"
          "\n*******************************************\n"
-         , CONFIG_CAM_ENGINE_LIB_VERSION);
+         , CONFIG_CAM_ENGINE_LIB_VERSION
+		 , CONFIG_AF_LIB_VERSION
+		 , CONFIG_AWB_LIB_VERSION
+		 , CONFIG_AE_LIB_VERSION);
+#ifdef ANDROID_VERSION_ABOVE_8_X
+	property_set(CAM_RKISP_PROPERTY_KEY,rkIspVersion);
+	property_set(CAM_AF_PROPERTY_KEY,rkIspAfVersion);
+	property_set(CAM_AWB_PROPERTY_KEY,rkIspAwbVersion);
+	property_set(CAM_AEC_PROPERTY_KEY,rkIspAecVersion);
+#endif
 }

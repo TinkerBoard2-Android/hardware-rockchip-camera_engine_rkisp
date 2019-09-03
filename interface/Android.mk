@@ -68,6 +68,8 @@ system/core/include \
 frameworks/native/libs/binder/include
 LOCAL_STATIC_LIBRARIES += android.hardware.camera.common@1.0-helper
 LOCAL_CFLAGS += -DANDROID_VERSION_ABOVE_8_X
+LOCAL_HEADER_LIBRARIES += \
+	libutils_headers
 else
 LOCAL_SHARED_LIBRARIES += \
 	libcamera_metadata \
