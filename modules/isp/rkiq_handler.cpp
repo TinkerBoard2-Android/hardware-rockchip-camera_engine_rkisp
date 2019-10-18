@@ -317,16 +317,19 @@ AiqAeHandler::processAeMetaResults(AecResult_t aec_results, X3aResultList &outpu
 
         // Calculate frame duration from AE results and sensor descriptor
         pixels_per_line = _rkaiq_result.sensor_exposure.line_length_pixels;
-        lines_per_frame = _rkaiq_result.sensor_exposure.frame_length_lines;
+        //lines_per_frame = _rkaiq_result.sensor_exposure.frame_length_lines;
 
         /*
          * Android wants the frame duration in nanoseconds
          */
+         lines_per_frame  =
+                (sensor_desc.line_periods_per_field < _rkaiq_result.sensor_exposure.frame_length_lines) ?
+                _rkaiq_result.sensor_exposure.frame_length_lines : sensor_desc.line_periods_per_field;
         int64_t frameDuration = (pixels_per_line * lines_per_frame) /
                                 sensor_desc.pixel_clock_freq_mhz;
         frameDuration *= 1000;
-        metadata->update(ANDROID_SENSOR_FRAME_DURATION,
-                                             &frameDuration, 1);
+		//TO DO
+        //metadata->update(ANDROID_SENSOR_FRAME_DURATION, &frameDuration, 1);
 
 #if 0
         /*

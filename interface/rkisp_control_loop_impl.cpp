@@ -14,13 +14,14 @@
 #include "rkcamera_vendor_tags.h"
 
 #include <base/xcam_log.h>
+#include <calib_xml/calibdb.h>
 
 #define V4L2_CAPTURE_MODE_STILL 0x2000
 #define V4L2_CAPTURE_MODE_VIDEO 0x4000
 #define V4L2_CAPTURE_MODE_PREVIEW 0x8000
 
 #define MAX_MEDIA_INDEX 16
-
+#define MAX_SENSOR_NUM  16
 #define AIQ_CONTEXT_CAST(context)  ((RkispDeviceManager*)(context))
 
 #ifdef ANDROID_VERSION_ABOVE_8_X
@@ -36,6 +37,7 @@ using namespace android;
 
 CameraMetadata RkispDeviceManager::staticMeta;
 static vendor_tag_ops_t rkcamera_vendor_tag_ops_instance;
+extern CalibDb* CamIa10_construct_calib_maps(char *aiqb_data_file);
 
 typedef enum RKISP_CL_STATE_enum {
     RKISP_CL_STATE_INVALID  = -1,
@@ -148,6 +150,224 @@ __rkisp_get_cam_module_info(V4l2SubDevice* sensor_sd, struct rkmodule_inf* mod_i
     }
     return 0;
 }
+
+static rkisp_metadata_info_t gDefMetadata[MAX_SENSOR_NUM];
+
+static int __rkisp_get_sensor_fmt_infos(SmartPtr<V4l2SubDevice> subDev, rkisp_metadata_info_t *metadata_info)
+{
+	struct v4l2_subdev_frame_interval_enum fintval_enum;
+	struct v4l2_subdev_mbus_code_enum  code_enum;
+	unsigned int max_res_w = 0, max_res_h = 0;
+	unsigned int max_fps_w = 0, max_fps_h = 0, ret = 0;
+	float fps = 0.0, max_res_fps = 0.0, max_fps = 0.0;
+
+	ret = subDev->open ();
+	if (ret < 0) {
+		LOGE("failed to open sub device!");
+		return ret;
+	}
+	memset(&code_enum, 0, sizeof(code_enum));
+	code_enum.index = 0;
+	if ((ret = subDev->io_control(VIDIOC_SUBDEV_ENUM_MBUS_CODE, &code_enum)) < 0){
+		LOGE("enum mbus code failed!");
+		return ret;
+	}
+
+	memset(&fintval_enum, 0, sizeof(fintval_enum));
+	fintval_enum.pad = 0;
+	fintval_enum.index = 0;
+	fintval_enum.code = code_enum.code;
+	while (subDev->io_control(VIDIOC_SUBDEV_ENUM_FRAME_INTERVAL, &fintval_enum) >= 0)
+	{
+		fps = (float)fintval_enum.interval.denominator / (float)fintval_enum.interval.numerator;
+		if ((fintval_enum.width >= max_res_w) && (fintval_enum.height >= max_res_h)){
+			if((fintval_enum.width > max_res_w) && (fintval_enum.height > max_res_h)) {
+				max_res_fps = fps;
+				max_res_w = fintval_enum.width;
+				max_res_h = fintval_enum.height;
+			} else if (fps > max_res_fps) {
+				max_res_fps = fps;
+			}
+		}
+
+		if (fps >= max_fps){
+			if (fps > max_fps) {
+				max_fps_w = fintval_enum.width;
+				max_fps_h = fintval_enum.height;
+				max_fps = fps;
+			}else if((fintval_enum.width < max_fps_w) &&
+					(fintval_enum.height < max_fps_h)) {
+				max_fps_w = fintval_enum.width;
+				max_fps_h = fintval_enum.height;
+			}
+		}
+		fintval_enum.index++;
+	}
+
+	if (fintval_enum.index == 0){
+		LOGE("enum frame interval error, size count is zero");
+		return -1;
+	}
+	if((max_res_w == max_fps_w) && (max_res_h == max_fps_h)){
+		metadata_info->res_num = 1;
+		metadata_info->full_size.width = max_res_w;
+		metadata_info->full_size.height = max_res_h;
+		metadata_info->full_size.fps = max_res_fps;
+	}else{
+		metadata_info->res_num = 2;
+		metadata_info->full_size.width = max_res_w;
+		metadata_info->full_size.height = max_res_h;
+		metadata_info->full_size.fps = max_res_fps;
+		metadata_info->binning_size.width = max_fps_w;
+		metadata_info->binning_size.height = max_fps_h;
+		metadata_info->binning_size.fps = max_fps;
+	}
+	subDev->close ();
+	return 0;
+}
+
+static int __get_device_path(struct media_entity *entity, char *devpath)
+{
+	char sysname[32];
+	char target[1024];
+	char *p;
+	int ret = 0;
+
+	sprintf(sysname, "/sys/dev/char/%u:%u", entity->info.v4l.major,
+			entity->info.v4l.minor);
+	ret = readlink(sysname, target, sizeof(target));
+	if (ret < 0)
+		return ret;
+
+	target[ret] = '\0';
+	p = strrchr(target, '/');
+	if (p == NULL)
+	  return -1;
+	sprintf(devpath, "/dev/%s", p + 1);
+	return 0;
+}
+
+static int __rkisp_get_iq_exp_infos(SmartPtr<V4l2SubDevice> subDev, rkisp_metadata_info_t *metadata_info)
+{
+	struct rkmodule_inf camera_mod_info;
+	char iq_file_full_name[256];
+	char iq_file_name[128];
+	CalibDb* calibdb_p = NULL;
+	int ret = 0;
+
+	ret = subDev->open ();
+	if(ret < 0){
+		LOGE("sub device open failed");
+		return -1;
+	}
+	xcam_mem_clear (camera_mod_info);
+	if (__rkisp_get_cam_module_info(subDev.ptr(), &camera_mod_info)) {
+	   LOGE("failed to get cam module info");
+	   return -1;
+	}
+	xcam_mem_clear (iq_file_full_name);
+	xcam_mem_clear (iq_file_name);
+	strcpy(iq_file_full_name, RK_3A_TUNING_FILE_PATH);
+	__rkisp_auto_select_iqfile(&camera_mod_info, metadata_info->entity_name, iq_file_name);
+	strcat(iq_file_full_name, iq_file_name);
+	if (access(iq_file_full_name, F_OK) == 0) {
+		calibdb_p = CamIa10_construct_calib_maps(iq_file_full_name);
+		if (calibdb_p) {
+			CamCalibAecGlobal_t* pAecGlobal;
+			CamCalibDbGetAecGlobal(calibdb_p->GetCalibDbHandle(), &pAecGlobal);
+			if((pAecGlobal == NULL) || (pAecGlobal->GainRange.array_size%7 != 0)){
+				LOGE("iq xml gain range size error!");
+				return -1;
+			}
+			CamCalibAecExpSeparate_t* pExpSeparate = NULL;
+			CamCalibDbGetExpSeparateByName(calibdb_p->GetCalibDbHandle(),pAecGlobal,"NORMAL", &pExpSeparate);
+			if(pExpSeparate == NULL){
+				LOGE("CamCalibDbGetExpSeparateByName fail");
+				return -1;
+			}
+
+			int index = (pAecGlobal->GainRange.array_size/7 - 1)*7+1;
+			metadata_info->gain_range[0] = pAecGlobal->GainRange.pGainRange[0];
+			metadata_info->gain_range[1] = pAecGlobal->GainRange.pGainRange[index];
+			metadata_info->time_range[0] = pExpSeparate->ecmTimeDot.fCoeff[0];
+			metadata_info->time_range[1] = pExpSeparate->ecmTimeDot.fCoeff[5];
+		}
+	}else {
+		LOGW("calib file %s not found! Ignore it if not raw sensor.", iq_file_full_name);
+	}
+	subDev->close ();
+	return 0;
+}
+
+static int __rkisp_get_all_sensor_devices
+(
+	SmartPtr<V4l2SubDevice> *subdev,
+	int *count,
+	rkisp_metadata_info_t *meta_info
+)
+{
+    char sys_path[64], devpath[32];
+    FILE *fp = NULL;
+    struct media_device *device = NULL;
+    uint32_t nents, j = 0, i = 0, index = 0;
+	const struct media_entity_desc *entity_info = NULL;
+	struct media_entity *entity = NULL;
+
+    while (i < MAX_MEDIA_INDEX) {
+        snprintf (sys_path, 64, "/dev/media%d", i++);
+        fp = fopen (sys_path, "r");
+        if (!fp)
+          continue;
+        fclose (fp);
+        device = media_device_new (sys_path);
+
+        /* Enumerate entities, pads and links. */
+        media_device_enumerate (device);
+
+        nents = media_get_entities_count (device);
+        for (j = 0; j < nents; ++j) {
+          entity = media_get_entity (device, j);
+          entity_info = media_entity_get_info(entity);
+          if ((NULL != entity_info) && (entity_info->type == MEDIA_ENT_T_V4L2_SUBDEV_SENSOR)){
+              if (__get_device_path(entity, devpath) < 0){
+                  LOGW("failed to get device path of (%s), skip it!", entity_info->name);
+                  continue;
+              }
+              subdev[index] = new V4l2SubDevice (devpath);
+              strcpy(meta_info[index].entity_name, entity_info->name);
+              index++;
+           }
+        }
+        media_device_unref (device);
+    }
+    *count = index;
+    return 0;
+}
+
+int rkisp_construct_iq_default_metadatas(rkisp_metadata_info_t **meta_info, int *num)
+{
+    int nSensor = 0;
+	SmartPtr<V4l2SubDevice> sensor_dev[MAX_SENSOR_NUM];
+
+	__rkisp_get_all_sensor_devices(sensor_dev, &nSensor, gDefMetadata);
+
+	for(int i = 0; i < nSensor; i++){
+		if (__rkisp_get_iq_exp_infos(sensor_dev[i], &gDefMetadata[i]) < 0){
+			goto EXIT;
+		}
+		if (__rkisp_get_sensor_fmt_infos(sensor_dev[i], &gDefMetadata[i]) < 0){
+			goto EXIT;
+		}
+	}
+	*meta_info = gDefMetadata;
+	*num = nSensor;
+    return 0;
+EXIT:
+	*meta_info = NULL;
+	*num = 0;
+	return -1;
+}
+
 
 static int __rkisp_get_sensor_name(const char* vnode, char* sensor_name) {
     char sys_path[64];

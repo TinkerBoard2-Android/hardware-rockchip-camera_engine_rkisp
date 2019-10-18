@@ -116,9 +116,12 @@ using ::android::hardware::camera::common::V1_0::helper::CameraMetadata;
  *  - awb lib v0.0.e
  *  - af lib v0.2.17
  *  - matched rkisp driver v0.1.5
+ *  v2.3.0
+ *  - calibdb created before ctrloop start.
+ *  - static sensor info(resolution,gain range,time range etc.) get before ctrloop start.
  */
 
-#define CONFIG_CAM_ENGINE_LIB_VERSION "v2.2.0"
+#define CONFIG_CAM_ENGINE_LIB_VERSION "v2.3.0"
 
 using namespace XCam;
 class SettingsProcessor;

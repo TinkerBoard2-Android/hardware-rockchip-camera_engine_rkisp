@@ -86,6 +86,26 @@ struct rkisp_cl_frame_metadata_s {
     const camera_metadata_t *metas;
 };
 
+typedef struct frame_interval_s {
+	int width;
+	int height;
+	float fps;
+}frame_interval_t;
+
+typedef struct rkisp_metadata_info_s {
+	char entity_name[64];
+	float gain_range[2];
+	float time_range[2];
+	frame_interval_t binning_size;
+	frame_interval_t full_size;
+	int res_num;
+}rkisp_metadata_info_t;
+
+/*
+ * used to generate static iq metas, can be called before cl running
+ */
+int rkisp_construct_iq_default_metadatas(rkisp_metadata_info_t **meta_info, int *num);
+
 /*
  * Callback methods for the control loop to call into the hal.
  * CL return back the effective settings and 3A status meta rusults

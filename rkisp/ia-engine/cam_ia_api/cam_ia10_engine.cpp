@@ -15,6 +15,32 @@
 #include <string>
 
 static std::map<string, CalibDb*> g_CalibDbHandlesMap;
+static char g_aiq_data_files[16][256];
+static int g_aiq_data_files_num = 0;
+
+CalibDb* CamIa10_construct_calib_maps(char *aiqb_data_file)
+{
+	std::map<string, CalibDb*>::iterator it;
+
+    std::string iq_file_str(aiqb_data_file);
+    it = g_CalibDbHandlesMap.find(iq_file_str);
+    if (it != g_CalibDbHandlesMap.end()) {
+        LOGE("use cached calibdb for %s !", aiqb_data_file);
+        return it->second;
+    } else {
+        CalibDb* calibdb_p = new CalibDb();
+        if (calibdb_p->CreateCalibDb(aiqb_data_file)) {
+            LOGD("create calibdb from %s success.", aiqb_data_file);
+            g_CalibDbHandlesMap[iq_file_str] = calibdb_p;
+            strcpy(g_aiq_data_files[g_aiq_data_files_num++], aiqb_data_file);
+            return calibdb_p;
+        } else {
+            LOGE("create calibdb from %s failed", aiqb_data_file);
+            delete calibdb_p;
+            return NULL;
+        }
+    }
+}
 
 CamIA10Engine::CamIA10Engine():
     aecContext(NULL),
@@ -149,31 +175,25 @@ RESULT CamIA10Engine::initStatic
  ) {
     RESULT result = RET_FAILURE;
     CamCalibDbMetaData_t dbMeta;
-    if (!hCamCalibDb) {
-        std::string iq_file_str(aiqb_data_file);
-        std::map<string, CalibDb*>::iterator it;
-        it = g_CalibDbHandlesMap.find(iq_file_str);
-        if (it != g_CalibDbHandlesMap.end()) {
-            CalibDb* calibdb_p = it->second;
-            hCamCalibDb = calibdb_p->GetCalibDbHandle();
-            struct sensor_calib_info* pCalib_info = calibdb_p->GetCalibDbInfo();
-            magicVerCode = pCalib_info->IQMagicVerCode;
-            LOGD("use cached calibdb for %s !", aiqb_data_file);
-        } else {
-            CalibDb* calibdb_p = new CalibDb();
-            if (calibdb_p->CreateCalibDb(aiqb_data_file)) {
-                LOGD("create calibdb from %s success.", aiqb_data_file);
-                hCamCalibDb = calibdb_p->GetCalibDbHandle();
-                g_CalibDbHandlesMap[iq_file_str] = calibdb_p;
-                struct sensor_calib_info* pCalib_info = calibdb_p->GetCalibDbInfo();
-                magicVerCode = pCalib_info->IQMagicVerCode;
-            } else {
-                LOGE("create calibdb from %s failed", aiqb_data_file);
-                delete calibdb_p;
-                goto init_fail;
-            }
-        }
-    }
+
+	if (g_CalibDbHandlesMap.size() == 0){
+		for(int i=0; i<g_aiq_data_files_num; i++)
+			CamIa10_construct_calib_maps(g_aiq_data_files[i]);
+	}
+
+	std::string iq_file_str(aiqb_data_file);
+	std::map<string, CalibDb*>::iterator it;
+	it = g_CalibDbHandlesMap.find(iq_file_str);
+	if (it != g_CalibDbHandlesMap.end()) {
+		CalibDb* calibdb_p = it->second;
+		hCamCalibDb = calibdb_p->GetCalibDbHandle();
+		struct sensor_calib_info* pCalib_info = calibdb_p->GetCalibDbInfo();
+		magicVerCode = pCalib_info->IQMagicVerCode;
+		LOGD("use cached calibdb for %s !", aiqb_data_file);
+	} else {
+		LOGE("calibdb from %s not found!", aiqb_data_file);
+		goto init_fail;
+	}
 
     strcpy(g_aiqb_data_file, aiqb_data_file);
     mSensorEntityName = sensor_entity_name;
@@ -549,9 +569,10 @@ RESULT CamIA10Engine::updateAeConfig(struct CamIA10_DyCfg* cfg) {
                 (set->ae_bias / 100.0f) * MAX(10, SetPoint / (1 - pAecGlobal->ClmTolerance / 100.0f) / 10.0f) ;
 
             mLightMode = cfg->LightMode;
-#if 1
+
             int ecmCnt = sizeof(aecCfg.EcmTimeDot.fCoeff) / sizeof (float);
-            if (set->frame_time_ns_min != 0 && set->frame_time_ns_max != 0) {
+            if (set->frame_time_ns_min != 0 && set->frame_time_ns_max != 0 &&
+                set->frame_time_ns_min == set->frame_time_ns_max) {
                 aecCfg.FpsSetEnable = true;
                 aecCfg.isFpsFix = false;
                 if(!aecCfg.IsHdrAeMode){
@@ -563,6 +584,12 @@ RESULT CamIA10Engine::updateAeConfig(struct CamIA10_DyCfg* cfg) {
                 aecCfg.MinFrameDuration = (float)set->frame_time_ns_min / (1000 * 1000 * 1000);
                 aecCfg.MaxFrameDuration = (float)set->frame_time_ns_max / (1000 * 1000 * 1000);
             } else {
+                CamCalibAecExpSeparate_t* pExpSeparate = NULL;
+                char mode[] = "NORMAL";
+                CamCalibDbGetExpSeparateByName(hCamCalibDb,pAecGlobal,mode, &pExpSeparate);
+                if(pExpSeparate)
+                    memcpy(aecCfg.EcmTimeDot.fCoeff, pExpSeparate->ecmTimeDot.fCoeff, ecmCnt*sizeof(float));
+
                 aecCfg.MinFrameDuration = aecCfg.EcmTimeDot.fCoeff[0];
                 aecCfg.MaxFrameDuration = aecCfg.EcmTimeDot.fCoeff[ecmCnt - 1];
             }
@@ -579,7 +606,6 @@ RESULT CamIA10Engine::updateAeConfig(struct CamIA10_DyCfg* cfg) {
                  mStats.sensor_mode.line_periods_per_field,
                  aecCfg.PixelClockFreqMHZ,
                  aecCfg.PixelPeriodsPerLine);
-#endif
         }
         switch (set->mode) {
             case HAL_AE_OPERATION_MODE_MANUAL:
