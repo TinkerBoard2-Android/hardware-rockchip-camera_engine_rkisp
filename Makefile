@@ -22,7 +22,7 @@ export  IS_SUPPORT_ION
 export  IS_SUPPORT_DMABUF
 export  IS_BUILD_GSTREAMER_PLUGIN
 export  IS_BUILD_TEST_APP
-
+export  IS_HAVE_DRM
 #System level flags
 export  PRJ_CPPFLAGS
 
