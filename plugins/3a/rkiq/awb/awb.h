@@ -74,9 +74,14 @@
  * - support awb_v11
   * v0.0.e
  * - IQ_Tool v2.2 support awb_v11
+ * v0.0.f
+ *0) do gain clipped before gain damped,to get target gain
+ *1) compare target WB gain with IC gain to get awb converged status
+ *2) set awb values in each frame
+ *3) no illuminant estimination when awb is converged, to make illuminant estamination result stabile
  */
 
-#define CONFIG_AWB_LIB_VERSION "v0.0.e"
+#define CONFIG_AWB_LIB_VERSION "v0.0.f"
 
 
 #ifdef __cplusplus
