@@ -149,4 +149,24 @@ else
 LOCAL_SRC_FILES := ../plugins/3a/rkiq/af/lib32/$(LOCAL_MODULE)$(LOCAL_MODULE_SUFFIX)
 endif
 include $(BUILD_PREBUILT)
+
+
+include $(CLEAR_VARS)
+LOCAL_MODULE := libuvcapp
+ifeq (1,$(strip $(shell expr $(PLATFORM_SDK_VERSION) \>= 26)))
+	LOCAL_PROPRIETARY_MODULE := true
+endif
+LOCAL_MODULE_TAGS := optional
+LOCAL_MODULE_CLASS := SHARED_LIBRARIES
+LOCAL_MODULE_STEM := $(LOCAL_MODULE)
+LOCAL_MODULE_SUFFIX := .so
+ifneq ($(strip $(TARGET_2ND_ARCH)), )
+	LOCAL_MULTILIB := both
+LOCAL_SRC_FILES_$(TARGET_2ND_ARCH) := ../plugins/uvcApp/lib32/$(LOCAL_MODULE)$(LOCAL_MODULE_SUFFIX)
+LOCAL_SRC_FILES_$(TARGET_ARCH) := ../plugins/uvcApp/lib64/$(LOCAL_MODULE)$(LOCAL_MODULE_SUFFIX)
+else
+	LOCAL_SRC_FILES := ../plugins/uvcApp/lib32/$(LOCAL_MODULE)$(LOCAL_MODULE_SUFFIX)
+endif
+include $(BUILD_PREBUILT)
+
 endif
