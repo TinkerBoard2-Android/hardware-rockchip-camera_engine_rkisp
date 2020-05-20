@@ -760,7 +760,7 @@ RESULT CamIA10Engine::updateAwbConfig(struct CamIA10_DyCfg* cfg) {
                 //HORIZON:2300K
                 //SNOW :6800k
                 //CANDLE:1850K
-                if (cfg->awb_cfg.mode == HAL_WB_INCANDESCENT) {
+                if (mXMLIspOutputType == isp_gray_output_type) {
                     strcpy(prfName, "BW");
                 } else if (cfg->awb_cfg.mode == HAL_WB_INCANDESCENT) {
                     strcpy(prfName, "A");
