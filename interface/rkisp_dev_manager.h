@@ -48,6 +48,8 @@
 #ifdef ANDROID_VERSION_ABOVE_8_X
 #include <CameraMetadata.h>
 using ::android::hardware::camera::common::V1_0::helper::CameraMetadata;
+#include <cutils/properties.h>
+#define CAM_IQ_PROPERTY_KEY  "vendor.cam.librkisp.iqfile.name"
 #else
 #include <camera/CameraMetadata.h>
 #endif

@@ -574,6 +574,9 @@ int rkisp_cl_prepare(void* cl_ctx,
         if (access(iq_file_full_name, F_OK) == 0) {
             device_manager->set_iq_path(iq_file_full_name);
             device_manager->set_has_3a(true);
+#ifdef ANDROID_VERSION_ABOVE_8_X
+            property_set(CAM_IQ_PROPERTY_KEY,iq_file_full_name);
+#endif
         } else {
             LOGE("can't access iq file %s !", iq_file_full_name);
             device_manager->set_has_3a(false);
