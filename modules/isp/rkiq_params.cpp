@@ -63,7 +63,7 @@ static int dpcc_param_check(struct cifisp_dpcc_config* arg, int isp_ver)
     for (i = 0; i < CIFISP_DPCC_METHODS_MAX; i++) {
         if ((method->method & CIF_ISP_DPCC_METHODS_SET_RESERVED_V12) ||
             (method->line_thresh & CIF_ISP_DPCC_LINE_THRESH_RESERVED_V12) ||
-            (method->line_mad_fac & CIF_ISP_DPCC_LINE_MAD_FAC_RESERVED)) {
+            (method->line_mad_fac & CIF_ISP_DPCC_LINE_MAD_FAC_RESERVED_V12)) {
             LOGE("%s:%d check error !", __FUNCTION__, __LINE__);
             goto err;
         }
