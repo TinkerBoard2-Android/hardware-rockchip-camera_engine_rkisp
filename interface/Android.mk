@@ -95,6 +95,9 @@ include $(CLEAR_VARS)
 LOCAL_MODULE_RELATIVE_PATH := rkisp/ae
 LOCAL_MODULE := librkisp_aec
 AEC_LIB_NAME := librkisp_aec.so
+ifeq (1,$(strip $(shell expr $(PLATFORM_SDK_VERSION) \>= 29)))
+     LOCAL_CHECK_ELF_FILES := false
+endif
 ifeq (1,$(strip $(shell expr $(PLATFORM_SDK_VERSION) \>= 26)))
      LOCAL_PROPRIETARY_MODULE := true
 endif
@@ -115,6 +118,9 @@ include $(BUILD_PREBUILT)
 include $(CLEAR_VARS)
 LOCAL_MODULE_RELATIVE_PATH := rkisp/awb
 LOCAL_MODULE := librkisp_awb
+ifeq (1,$(strip $(shell expr $(PLATFORM_SDK_VERSION) \>= 29)))
+     LOCAL_CHECK_ELF_FILES := false
+endif
 ifeq (1,$(strip $(shell expr $(PLATFORM_SDK_VERSION) \>= 26)))
     LOCAL_PROPRIETARY_MODULE := true
 endif
@@ -134,6 +140,9 @@ include $(BUILD_PREBUILT)
 include $(CLEAR_VARS)
 LOCAL_MODULE_RELATIVE_PATH := rkisp/af
 LOCAL_MODULE := librkisp_af
+ifeq (1,$(strip $(shell expr $(PLATFORM_SDK_VERSION) \>= 29)))
+     LOCAL_CHECK_ELF_FILES := false
+endif
 ifeq (1,$(strip $(shell expr $(PLATFORM_SDK_VERSION) \>= 26)))
     LOCAL_PROPRIETARY_MODULE := true
 endif
@@ -155,6 +164,9 @@ include $(CLEAR_VARS)
 LOCAL_MODULE := libuvcapp
 ifeq (1,$(strip $(shell expr $(PLATFORM_SDK_VERSION) \>= 26)))
 	LOCAL_PROPRIETARY_MODULE := true
+endif
+ifeq (1,$(strip $(shell expr $(PLATFORM_SDK_VERSION) \>= 29)))
+     LOCAL_CHECK_ELF_FILES := false
 endif
 LOCAL_MODULE_TAGS := optional
 LOCAL_MODULE_CLASS := SHARED_LIBRARIES
